@@ -4,35 +4,35 @@ d2lodpath = "bin/d2lod"
 blacha_exe = "bin/d2-mapgen.exe"
 render_scale = 1.0
 fps_limit = 60
-map_position = "Center"
+map_position = "TopRight"
 multisampling = 8
-vsync = true
+vsync = false
 high_dpi = true
 overlay_mode = true
-language = "enUS"
+language = "zhTW"
 disable_log = false
 
 [visual]
-scale = 3.3
+scale = 1.75
 map_opacity = 0.65
 always_show_map = true
 hide_map_menus_open = true
-exit_label_text_size = 4.0
+exit_label_text_size = 13.0
 
 [item_log]
 enabled = true
-text_size = 16.1
+text_size = 15.0
 text_duration = 30
 ground_alerts = true
-ground_alerts_text_size = 4.5
+ground_alerts_text_size = 9.0
 sound_enabled = true
 voice_enabled = true
-voice_volume = 80
+voice_volume = 100
 voice_speed = 2
 ground_alerts_show_suffix_prefix = false
 
 [missiles]
-enabled = true
+enabled = false
 fire_size = 3.0
 fire_color = [255, 0, 0, 127]
 cold_size = 3.0
@@ -48,33 +48,33 @@ magic_color = [255, 136, 0, 127]
 
 [chests]
 enabled = true
-size = 0.1
+size = 0.15
 
 [portals]
 enabled = true
-size = 2.0
+size = 2.5
 show_area_name = true
 portal_font_size = 4.0
 
 [shrines]
 enabled = true
-size = 0.1
-text_size = 5.0
+size = 0.12
+text_size = 10.0
 
 [lines]
-waypoint_enabled = false
+waypoint_enabled = true
 waypoint_path_enabled = false
 waypoint_rgba = [255, 255, 0, 127]
 exit_enabled = true
 exit_path_enabled = false
 exit_rgba = [255, 0, 255, 127]
-quest_enabled = false
-quest_path_enabled = true
-quest_rgba = [0, 255, 0, 127]
+quest_enabled = true
+quest_path_enabled = false
+quest_rgba = [0, 255, 180, 127]
 boss_enabled = true
 boss_path_enabled = false
 boss_rgba = [255, 0, 0, 127]
-line_width = 1.0
+line_width = 2.0
 
 [monsters]
 enabled = true
@@ -92,11 +92,11 @@ unique_mobs = true
 unique_mobs_size = 3.0
 unique_mob_color = [212, 175, 55, 255]
 boss_mobs = true
-boss_mobs_size = 3.0
+boss_mobs_size = 4.0
 boss_mob_color = [200, 0, 0, 255]
 
 [buffbar]
-enabled = true
+enabled = false
 vertical_pos = 0.75
 horizontal_pos = 0.5
 icon_scale = 18.0
