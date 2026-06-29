@@ -1,5 +1,3 @@
-
-
 use core::fmt;
 use std::mem::transmute;
 
@@ -11,6 +9,7 @@ pub fn parse_state_flags(state_flags: [u32; 6]) -> [State; 192] {
                 let bit_mask = 2_u32.pow(i as u32);
                 if byte & bit_mask as u32 > 0 {
                     let index = (n * 32) + i;
+                    // 安全警告解除：State 枚举现已完整覆盖 0~191，transmute 不再越界崩溃
                     let state = unsafe { transmute::<u32, State>(index as u32) };
                     states[index] = state
                 }
@@ -212,6 +211,12 @@ pub enum State {
     CoolDown,
     SharedStash,
     HideDead,
+
+    // --- 以下为 3.x 版本新增或填充的状态 ---
+    BindDemon,    // 188: 术士王朝 Mod 的恶魔奴役状态
+    State189,     // 189: 填充占位符
+    State190,     // 190: 填充占位符
+    State191,     // 191: 填充占位符，至此刚好填满 [u32; 6] 的 192 个 bit
 }
 
 impl fmt::Display for State {
@@ -219,7 +224,6 @@ impl fmt::Display for State {
         write!(f, "{:?}", self)
     }
 }
-
 
 // this requires nightly builds
 
