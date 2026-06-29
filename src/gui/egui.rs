@@ -482,7 +482,7 @@ pub fn create_egui_panel(app: &mut App, ctx: &Context, state: &mut State, hwnd: 
         let splash_text = format!(
             "{}{}{}{}{}",
             obfstr::obfstr!("If you paid for this, you have been scammed\n"),
-            obfstr::obfstr!("如果您為此付出了，您已經被騙了\n"),
+            obfstr::obfstr!("如果您付费了，您已经被骗了\n"),
             obfstr::obfstr!("당신이 이것을 지불했다면 당신은 사기를당했습니다\n"),
             obfstr::obfstr!("あなたがこれに対して支払った場合、あなたは詐欺されています\n"),
             obfstr::obfstr!("Если вы заплатили за это, вас обманули\n")
@@ -530,7 +530,7 @@ pub fn create_language_select_ui(app: &mut App, ctx: &Context, state: &mut State
             if ui.button(egui::RichText::new("English").size(font_size)).clicked() { change_language(state, Locales::enUS)} 
             if ui.button(egui::RichText::new("Deutsch").size(font_size)).clicked() { change_language(state, Locales::deDE)}
             if ui.button(egui::RichText::new("한국어").size(font_size)).clicked() { change_language(state, Locales::koKR)}
-            if ui.button(egui::RichText::new("臺灣話").size(font_size)).clicked() { change_language(state, Locales::zhTW)}
+            if ui.button(egui::RichText::new("中文").size(font_size)).clicked() { change_language(state, Locales::zhTW)}
             if ui.button(egui::RichText::new("español").size(font_size)).clicked() { change_language(state, Locales::esES)}
             if ui.button(egui::RichText::new("français").size(font_size)).clicked() { change_language(state, Locales::frFR)}
             if ui.button(egui::RichText::new("italiano").size(font_size)).clicked() { change_language(state, Locales::itIT)}
