@@ -56,7 +56,6 @@ pub struct D2RWindowArea {
 
 impl D2RInstance {
     pub fn new(window: &WindowInfo) -> Self {
-        // https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocess?redirectedfrom=MSDN
         let pid: u32 = window.pid;
         let handle: HANDLE = unsafe { OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid) };
         if handle == NULL {
@@ -72,7 +71,6 @@ impl D2RInstance {
                 std::io::Error::last_os_error()
             );
             panic!("{}", msg);
-
         }
         let base_address = Self::base_address(handle).unwrap();
 
@@ -210,50 +208,38 @@ impl D2RInstance {
         }
     }
 
-    pub fn find_offsets(pid: u32) -> Offsets {
+    pub fn find_offsets(_pid: u32) -> Offsets {
+        // 根據最新遊戲版本更新的硬編碼偏移量 (2026 最新版本)
 
-        // let pattern = String::from("48 03 C7 49 8B 8C C6");
-        // let unit_table = Self::scan_pattern(pid, pattern, 7, 0);
-        // let unit_table = 0x1D95AF0;
-        let unit_table = 0x1EA73D0;
+        let unit_table = 0x1EB9430;
         log::debug!("Unit offset 0x{:02x}", unit_table);
 
-        // let pattern = String::from("40 84 ed 0f 94 05");
-        // let ui_offset = Self::scan_pattern(pid, pattern, 6, 10);
-        let ui_offset = 0x1EB70CA;
+        let ui_offset = 0x1EC912A;
         log::debug!("UI offset 0x{:02x}", ui_offset);
 
-        //let pattern = String::from("48 8B 05 ? ? ? ? ? 8B D9 F3 0F 10 50 ?");
-        //let expansion = Self::scan_pattern(pid, pattern, 3, 7);
-        let expansion = 0x1DFA4E8;
+        let expansion = 0x1E0C508;
         log::debug!("Exp offset 0x{:02x}", expansion);
 
-        // let pattern = String::from("C6 84 C2 ? ? ? ? ? 48 8B 74 24 ?");
-        // let hover = Self::scan_pattern(pid, pattern, 3, 0) - 1;
-        let hover = 0x1DFB080;
+        let hover = 0x1E0D0A0;
         log::debug!("Hover offset 0x{:02x}", hover);
 
-        // let pattern = String::from("02 45 33 D2 4D 8B");
-        // let roster = Self::scan_pattern(pid, pattern, -3, 1);
-        let roster = 0x1EBD6E8;
+        let roster = 0x1ECF748;
         log::debug!("Roster offset 0x{:02x}", roster);
 
-        // let pattern = String::from("48 89 05 ? ? ? ? 48 85 DB 74 1E");
-        // let panels = Self::scan_pattern(pid, pattern, 3, 7);
-        // let panels = 0x1D00968;
-        let panels = 0x1E11E40;
+        let panels = 0x1E23E60;
         log::debug!("Panel offset 0x{:02x}", panels);
 
-        // let pattern = String::from("02 00 00 00 ? ? 00 00 00 00 03 00 00 00 ? ? 01 00 00 00");
-        // let keybindings = Self::scan_pattern(pid, pattern, 0, 0x158C);
-        let keybindings = 0x19D2420;
+        let keybindings = 0x19E4460;
         log::debug!("Keybindings offset 0x{:02x}", keybindings);
+
+        let last_game_name = 0x25CE638;
+        log::debug!("Game Name Base offset 0x{:02x}", last_game_name);
 
         Offsets {
             unit_table: unit_table as u64,
-            ui_offset: (ui_offset - 0xA) as u64,
+            ui_offset: (ui_offset - 0xA) as u64, // 保持原有的減去 0xA 邏輯處理
             expansion: expansion as u64,
-            last_game_name: 0x25F1450,
+            last_game_name: last_game_name as u64, 
             hover: hover as u64,
             roster: roster as u64,
             panels: panels as u64,
@@ -372,7 +358,6 @@ fn get_caller() -> String {
     if backtrace.status() == BacktraceStatus::Captured {
         let backtrace_string = format!("{:?}", backtrace);
         let entries = backtrace_string.split("{ fn: ").collect::<Vec<&str>>();
-        // log::info!("{:?}", entries);
         let mut calling_func = "";
         for i in 0..entries.len() - 1 {
             if entries[i].contains("PrimeMH::memory::process::D2RInstance::read_mem") {
