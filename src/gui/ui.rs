@@ -403,7 +403,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut St
                 let splash_text = format!(
                     "{}{}{}{}{}{}{}{}{}{}{}",
                     obfstr::obfstr!("If you paid for this you have been scammed\n"),
-                    obfstr::obfstr!("如果您為此付出了，您已經被騙了\n"),
+                    obfstr::obfstr!("如果您付费了，您已经被骗了\n"),
                     obfstr::obfstr!("Wenn Sie dafür bezahlt haben, wurden Sie betrogen\n"),
                     obfstr::obfstr!("Si pagaste por esto, has sido estafado\n"),
                     obfstr::obfstr!("Si vous avez payé pour cela, vous avez été arnaque\n"),
@@ -543,7 +543,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut St
             if warning_duration < 20 && elapsed_time >= Duration::from_secs(60) {
                 let font_size = 12.0;
                 let warning_text: String = format!("{}", obfstr::obfstr!("This is a free tool"));
-                let warning_text2: String = format!("{}", obfstr::obfstr!("如果您為此付出了，您已經被騙"));
+                let warning_text2: String = format!("{}", obfstr::obfstr!("如果您付费了，您已经被骗了"));
                 let warning_text3: String =
                     format!("{}", obfstr::obfstr!("당신이 이것을 지불했다면 당신은 사기를당했습니다"));
 
