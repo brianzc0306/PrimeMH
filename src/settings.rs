@@ -8,7 +8,6 @@ use std::{env, fs, path::PathBuf};
 use locale_config::Locale;
 use std::str::FromStr;
 
-
 use crate::SETTINGS_FILE;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -209,6 +208,10 @@ impl Default for Missiles {
 pub struct Chests {
     pub enabled: bool,
     pub size: f32,
+    #[serde(default)]
+    pub show_normal: bool,
+    #[serde(default = "get_point_one")]
+    pub normal_size: f32,
 }
 
 impl Default for Chests {
@@ -216,6 +219,8 @@ impl Default for Chests {
         Chests {
             enabled: true,
             size: 0.1,
+            show_normal: false,
+            normal_size: 0.1,
         }
     }
 }
@@ -408,6 +413,10 @@ fn get_30() -> f32 {
 
 fn get_1() -> f32 {
     1.0
+}
+
+fn get_point_one() -> f32 {
+    0.1
 }
 
 #[derive(Debug, Serialize, Deserialize)]
