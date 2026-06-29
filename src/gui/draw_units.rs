@@ -4,14 +4,13 @@ use notan::draw::*;
 use notan::math::Rect;
 use notan::prelude::*;
 
-
 use crate::localisation::localisation::detect_safe_font;
 use crate::memory::gamedata::GameData;
 use crate::settings::Settings;
 use crate::types::enchants::MonsterEnchants;
 use crate::types::{
     missile::{MissileType, MissileUnit},
-    npc::{MonsterFlag, NPC, NPCMode, NPCType, NPCUnit},
+    npc::{MonsterFlag, NPCMode, NPCType, NPCUnit},
     player::PlayerUnit,
     roster::RosterItem,
     states::State,
@@ -25,31 +24,70 @@ use super::Fonts;
 pub fn draw_units(draw: &mut Draw, game_data: &GameData, settings: &Settings, width: &f32, height: &f32, fonts: &Fonts) {
     let player_pos = (game_data.player.pos_x, game_data.player.pos_y);
 
-    // draw player dot at the centre
-    draw_player(&game_data.player, player_pos, draw, settings.visual.scale, width, height);
+    // 【注意这里】：原来画玩家的代码被我从这里拿走，挪到函数最下面了！
 
-    
-    // draw npcs
     if settings.monsters.enabled {
-        game_data.npcs.iter().for_each(|npc| match npc.npc_type {
-            NPCType::Monster => { draw_monster(npc, player_pos, draw, settings, width, height, fonts); }
-            NPCType::Town => { draw_town_npc(npc, player_pos, draw, settings, fonts, width, height); }
-            NPCType::Pet => { draw_pet(npc, player_pos, draw, settings.visual.scale, width, height);}
-            _ => (),
+        game_data.npcs.iter().for_each(|npc| {
+            let id_val = npc.txt_file_no.clone() as u32;
+            
+            let mut is_bound = matches!(npc.npc_type, NPCType::Pet) 
+                || npc.states.contains(&State::Revive)
+                || npc.states.contains(&State::Conversion);
+
+            if id_val >= 742 && id_val <= 744 {
+                is_bound = true;
+            }
+
+            if matches!(npc.monster_flag, MonsterFlag::Unique) 
+                && npc.monster_enchants.contains(&MonsterEnchants::ExtraStrong)
+                && npc.monster_enchants.contains(&MonsterEnchants::ExtraFast)
+                && npc.monster_enchants.contains(&MonsterEnchants::SpectralHit) 
+            {
+                is_bound = true;
+            }
+
+            if is_bound {
+                draw_pet(npc, player_pos, draw, settings.visual.scale, width, height);
+                return; 
+            }
+
+            match npc.npc_type {
+                NPCType::Monster => { draw_monster(npc, player_pos, draw, settings, width, height, fonts); }
+                NPCType::Town => { draw_town_npc(npc, player_pos, draw, settings, fonts, width, height); }
+                _ => (),
+            }
         });
     }
 
-    // draw bosses separately to ensure they draw on top
     if settings.monsters.enabled {
         game_data.npcs.iter().for_each(|npc| {
+            let id_val = npc.txt_file_no.clone() as u32;
+            let mut is_bound = matches!(npc.npc_type, NPCType::Pet) 
+                || npc.states.contains(&State::Revive)
+                || npc.states.contains(&State::Conversion);
+            
+            if id_val >= 742 && id_val <= 744 {
+                is_bound = true;
+            }
+
+            if matches!(npc.monster_flag, MonsterFlag::Unique) 
+                && npc.monster_enchants.contains(&MonsterEnchants::ExtraStrong)
+                && npc.monster_enchants.contains(&MonsterEnchants::ExtraFast)
+                && npc.monster_enchants.contains(&MonsterEnchants::SpectralHit) 
+            {
+                is_bound = true;
+            }
+            
+            if is_bound {
+                return;
+            }
+
             if let NPCType::Boss = npc.npc_type {
                 draw_boss(npc, player_pos, draw, settings, fonts, width, height);
             }
         });
     }
 
-    // draw other players
-    // get players that are in the roster, but not the unit table
     let same_levels = get_attached_levels(&game_data.seed_values.level);
     let roster_players: Vec<&RosterItem> = game_data
         .roster_items
@@ -64,7 +102,6 @@ pub fn draw_units(draw: &mut Draw, game_data: &GameData, settings: &Settings, wi
 
     let hostile_unit_ids = is_hostile(&game_data.roster_items, game_data.player.unit_id);
 
-    // if other players don't exist on unit tables, use roster data to draw them on map
     roster_players.iter().for_each(|other_player| {
         if game_data.player.unit_id != other_player.unit_id && same_levels.contains(&(other_player.area as u32)){
             let is_hostile = hostile_unit_ids.iter().any(|h| *h == other_player.unit_id);
@@ -83,7 +120,6 @@ pub fn draw_units(draw: &mut Draw, game_data: &GameData, settings: &Settings, wi
         }
     });
 
-    // draw other players which are on the unit table
     game_data.players.iter().for_each(|other_player| {
         if game_data.player.unit_id != other_player.unit_id {
             if other_player.states[State::SharedStash as usize] != State::SharedStash {
@@ -106,12 +142,16 @@ pub fn draw_units(draw: &mut Draw, game_data: &GameData, settings: &Settings, wi
         }
     });
 
-    // draw missiles
     if settings.missiles.enabled {
         game_data.missiles.iter().for_each(|missile: &MissileUnit| {
             draw_missle_type(missile, player_pos, draw, settings, width, height);
         });
     }
+
+    // =========================================================================
+    // 【终极置顶】：把玩家的绘制代码放在最后一行，覆盖掉其他所有的怪物和法术！
+    // =========================================================================
+    draw_player(&game_data.player, player_pos, draw, settings.visual.scale, width, height);
 }
 
 fn is_hostile(roster_players: &Vec<RosterItem>, player_unit_id: u32) -> Vec<u32> {
@@ -140,7 +180,6 @@ fn draw_monster(npc: &NPCUnit, player_pos: (f32, f32), draw: &mut Draw, settings
     let minion_mob_size: f32 = settings.monsters.minions_mobs_size * scale;
     let normal_mob_size: f32 = settings.monsters.normal_mobs_size * scale;
 
-    // should precalculate this somewhere
     let unique_color: Color = convert_color(settings.monsters.unique_mob_color);
     let champion_color: Color = convert_color(settings.monsters.champions_mob_color);
     let minion_color: Color = convert_color(settings.monsters.minions_mob_color);
@@ -185,25 +224,7 @@ fn draw_monster_enchants(
     size: f32,
     all_fonts: &Fonts
 ) {
-    
     if enchants.contains(&MonsterEnchants::Cursed) {
-        // let x = npc_pos.0;
-        // let y = npc_pos.1;
-        // let scale_x = size / 12.0;
-        // let scale_y = scale_x / 2.0;
-    
-        // draw.path()
-        //     .move_to(x, y)
-        //     .move_to((13.666 * scale_x) + x, (-6.0 * scale_y)+y)
-        //     .line_to((-9.5 * scale_x) + x, (10.0 * scale_y)+y)
-        //     .line_to((0.0 * scale_x) + x, (-16.0 * scale_y)+y)
-        //     .line_to((9.7 * scale_x) + x, (10.0 * scale_y)+y)
-        //     .line_to((-13.666 * scale_x) + x, (-6.0 * scale_y)+y)
-        //     .line_to((13.666 * scale_x) + x, (-6.0 * scale_y)+y)
-            
-    
-        //     .color(Color::BLACK)
-        //     .stroke(2.0);
         let text_pos = (npc_pos.0, (npc_pos.1 - (size*1.5)));
         draw.text(&all_fonts.blizzard_font, "C")
             .position(text_pos.0 + 1.0, text_pos.1 + 1.0)
@@ -218,7 +239,6 @@ fn draw_monster_enchants(
             .h_align_center()
             .v_align_top();
     }
-    
 }
 
 fn draw_monster_with_immunities(
@@ -236,16 +256,14 @@ fn draw_monster_with_immunities(
         .alpha(mob_color.a)
         .fill()
         .scale_from(npc_pos, (1.0, 0.5));
-    
 }
 
-
 fn draw_player(player: &PlayerUnit, player_pos: (f32, f32), draw: &mut Draw, scale: f32, width: &f32, height: &f32) {
-    let size = (1.8, 0.5);
+    let size = (2.4, 0.5);
     let unit_pos = (player.pos_x, player.pos_y);
     let npc_pos = transform_position(unit_pos, size, player_pos, scale, width, height);
-    let player_color = Color::from_hex(0x2087FDFF);
-    draw_cross(npc_pos, size.0 * scale, player_color, 0.4 * scale, draw);
+    let player_color = Color::from_hex(0xFFD700FF);
+    draw_cross(npc_pos, size.0 * scale, player_color, 0.8 * scale, draw);
 }
 
 fn draw_other_player(
@@ -260,16 +278,14 @@ fn draw_other_player(
     height: &f32,
     is_hostile: bool,
 ) {
-    let size = (1.8, 0.5);
+    let size = (1.4, 0.5);
     let other_player_pos = transform_position(unit_pos, size, player_pos, scale, width, height);
     let color: Color = if is_corpse { Color::MAGENTA } else { if is_hostile { Color::RED } else { Color::GREEN } };
 
-    draw_cross(other_player_pos, size.0 * scale, color, 0.4 * scale, draw);
+    draw_cross(other_player_pos, size.0 * scale, color, 5.0 * scale, draw);
 
     match detect_safe_font(player_name.clone(), all_fonts) {
         Some(font) => {
-            
-            // there is a bug drawing non-english chars, it doesn't seem to be encoding though
             let text_pos = (other_player_pos.0, (other_player_pos.1 - (7.0 * scale)));
             draw.text(&font, player_name)
                 .position(text_pos.0 + 1.5, text_pos.1 + 1.5)
@@ -305,8 +321,16 @@ fn draw_town_npc(npc: &NPCUnit, player_pos: (f32, f32), draw: &mut Draw, setting
 fn draw_boss(npc: &NPCUnit, player_pos: (f32, f32), draw: &mut Draw, settings: &Settings, all_fonts: &Fonts, width: &f32, height: &f32) {
     if npc.mode != NPCMode::Dead && npc.mode != NPCMode::Death {
         let scale = settings.visual.scale;
-        let boss_color: Color = convert_color(settings.monsters.boss_mob_color);
-        let size = (settings.monsters.boss_mobs_size * scale, settings.monsters.boss_mobs_size * scale / 2.0);
+        let mut boss_color: Color = convert_color(settings.monsters.boss_mob_color);
+        
+        let id_val = npc.txt_file_no.clone() as u32;
+        let is_colossal = id_val == 745 || id_val == 746 || id_val == 747;
+        let base_size = if is_colossal { settings.monsters.boss_mobs_size * 1.3 } else { settings.monsters.boss_mobs_size };
+        if is_colossal {
+            boss_color = Color::from_hex(0xFF4500FF); 
+        }
+
+        let size = (base_size * scale, base_size * scale / 2.0);
         let unit_pos = (npc.pos_x, npc.pos_y);
         let npc_pos = transform_position(unit_pos, size, player_pos, scale, width, height);
 
@@ -323,7 +347,12 @@ fn draw_boss(npc: &NPCUnit, player_pos: (f32, f32), draw: &mut Draw, settings: &
                 let font = all_fonts.get_safe_font(&settings.general.language);
                 let hp_percent = health as f32 / max_health as f32;
                 let boss_text: String = format!("{:?}", npc.txt_file_no);
-                let npc_label: String = localisation.get_npc_name(&boss_text);
+                let mut npc_label: String = localisation.get_npc_name(&boss_text);
+                
+                if is_colossal {
+                    npc_label = format!("[★巨怪★] {}", npc_label);
+                }
+
                 draw_health_bar(npc_pos, size.1, hp_percent, npc_label, draw, settings, font);
             },
             None => (),
@@ -384,7 +413,6 @@ fn draw_health_bar(
     font: &Font
 ) {
     let font_size = 4.5;
-    // draw boss health bar
     let scale = settings.visual.scale;
     let health_bar_pos = (npc_pos.0, npc_pos.1 - (size * scale));
 
@@ -430,12 +458,25 @@ fn draw_pet(npc: &NPCUnit, player_pos: (f32, f32), draw: &mut Draw, scale: f32, 
     let size = (3.0, 1.75);
     let unit_pos = (npc.pos_x, npc.pos_y);
     let npc_pos = transform_position(unit_pos, size, player_pos, scale, width, height);
-    match &npc.txt_file_no {
-        NPC::Hydra | NPC::Hydra2 | NPC::Hydra3 => {
+    
+    let id_val = npc.txt_file_no.clone() as u32;
+
+    match id_val {
+        351 | 352 | 353 => {
             draw.ellipse(npc_pos, size).color(Color::RED);
         }
+        // 术士魔仆
+        189 | 742 | 743 | 744 | 360 | 361 | 362 => {
+            let warlock_pet_color = Color::from_hex(0x436f73ff); 
+            draw_cross(npc_pos, 1.8 * scale, warlock_pet_color, 0.4 * scale, draw);
+        }
+        // 佣兵
+        271 | 338 | 359 | 561 | 562 => {
+            let merc_color = Color::from_hex(0x436f73ff); 
+            draw_cross(npc_pos, 1.8 * scale, merc_color, 0.4 * scale, draw);
+        }
         _ => {
-            draw_cross(npc_pos, 1.8 * scale, Color::from_hex(0x436f73ff), 0.2 * scale, draw);
+            draw_cross(npc_pos, 1.8 * scale, Color::from_hex(0x436f73ff), 0.4 * scale, draw);
         }
     };
 }
@@ -454,8 +495,6 @@ fn draw_missle_type(missile: &MissileUnit, player_pos: (f32, f32), draw: &mut Dr
     let unit_pos = (missile.pos_x, missile.pos_y);
     let missile_pos = transform_position(unit_pos, (size, size / 2.0), player_pos, scale, width, height);
     draw.ellipse(missile_pos, (size, size / 2.0)).color(color);
-    //missile overlay tint
-    // draw.ellipse(missile_pos, size).color(Color::from_hex(missile.missile_color));
 }
 
 fn transform_position(
@@ -507,9 +546,7 @@ fn convert_color(color_arr: [u8; 4]) -> Color {
     Color::from_bytes(color_arr[0], color_arr[1], color_arr[2], color_arr[3])
 }
 
-
 fn draw_immunities(npc_pos: (f32, f32), size: (f32, f32), immunities: HashSet<Immunity>, draw: &mut Draw, mob_color: Color) {
-
     let mut colors = vec![];
     immunities.iter().for_each(|immunity| match immunity {
         Immunity::Physical => colors.push(Color::from_hex(0xCD853FFF).with_alpha(mob_color.a)),
@@ -521,17 +558,15 @@ fn draw_immunities(npc_pos: (f32, f32), size: (f32, f32), immunities: HashSet<Im
         Immunity::None => colors.push(Color::from_hex(0x00000000).with_alpha(mob_color.a)),
     });
     if colors.len() == 0 {
-        return; // no immunities to draw
+        return;
     }
     colors.sort_by_key(|c| c.hex());
-    
-    
 
     let degrees = 360 / colors.len();
     for (im, color) in colors.iter().enumerate() {
-        let x: f32 = npc_pos.0;  // x-coordinate of center of arc
-        let y: f32 = npc_pos.1;  // y-coordinate of center of arc
-        let radius: f32 = size.0 * 1.6;  // radius of arc
+        let x: f32 = npc_pos.0;  
+        let y: f32 = npc_pos.1;  
+        let radius: f32 = size.0 * 1.6;  
         let start_angle: f32 = 270.0 + (im * degrees) as f32;
         let end_angle: f32 = 270.0 + ((im + 1) * degrees) as f32;
         {
@@ -544,7 +579,6 @@ fn draw_immunities(npc_pos: (f32, f32), size: (f32, f32), immunities: HashSet<Im
                 let x1 = x + radius * (degrees as f32 * std::f32::consts::PI / 180.0).cos();
                 let y1 = y + radius * (degrees as f32 * std::f32::consts::PI / 180.0).sin();
                 path.line_to(x1, y1);
-                // draw.rect((x1, y1), (2.0, 2.0)).color(Color::GREEN);
             }
             let end_x = x + radius * (end_angle as f32 * std::f32::consts::PI / 180.0).cos();
             let end_y = y + radius * (end_angle as f32 * std::f32::consts::PI / 180.0).sin();
@@ -555,5 +589,4 @@ fn draw_immunities(npc_pos: (f32, f32), size: (f32, f32), immunities: HashSet<Im
             path.scale_from(npc_pos, (1.0, 0.5));
         }
     }
-    
 }
