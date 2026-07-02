@@ -105,18 +105,24 @@ pub struct StaticPath {
 pub struct StatsList {
     #[derivative(Default(value = "[0; 48]"))]
     _dummy: [u8; 48],
-    pub stat_ptr: u64,  // 0x30
-    pub stat_count: u32,
+    pub stat_ptr: u64,      // 0x30
+    pub stat_count: u32,    // 0x38 (完美匹配雷达抓到的 0x038 翻转！)
     #[derivative(Default(value = "[0; 84]"))]
-    _dummy2: [u8; 84],
+    _dummy2: [u8; 84],      // 0x3C -> 0x90
     pub stat_unit_ptr: u64, // 0x90
-    #[derivative(Default(value = "[0; 16]"))]
-    _dummy3: [u8; 16],
-    pub stat_ex_ptr: u64,  // 0xA8
-    pub stat_ex_count: u32, // 0xB0
+    
+    // 👇 破案核心：暴雪在这里偷偷加了 64 个字节！原来是 16，现在必须是 80！
+    #[derivative(Default(value = "[0; 80]"))]
+    _dummy3: [u8; 80],      // 0x98 -> 0xE8
+    
+    pub stat_ex_ptr: u64,   // 0xE8 (完美匹配雷达抓到的 0x0E8 翻转！)
+    pub stat_ex_count: u32, // 0xF0 (完美匹配雷达抓到的 0x0F0 翻转！)
+    
+    // 👇 这里恢复原作者的 2620，因为上层的偏移已经替它扛下了所有误差！
     #[derivative(Default(value = "[0; 2620]"))]
-    _dummy4: [u8; 2620],
-    pub state_flags: [u32; 6],  //0xAF0
+    _dummy4: [u8; 2620],    // 0xF4 -> 0xB30
+    
+    pub state_flags: [u32; 8], // 0xB30 (0xB34 刚好是它的第二块！)
 }
 
 impl fmt::Display for StatsList {
@@ -177,11 +183,9 @@ pub struct MissileData {
     pub dw_owner_id: u32,     //0x24
 }
 
-
 #[repr(C)]
 #[derive(Derivative, Debug, Copy, Clone)]
 #[derivative(Default)]
-
 pub struct ItemData {
     pub quality: u32,
     low_seed: u32,
@@ -228,8 +232,6 @@ pub struct ActMisc {
     pub dw_end_seed_hash: u32,
     #[derivative(Default(value = "[0; 24]"))]
     _dummy4: [u8; 24],
-
-    
 }
 
 #[repr(C)]
@@ -282,7 +284,6 @@ pub struct Roster {
     pad_0048: [u8; 208],
     pub next_roster: u64,
 }
-
 
 #[repr(C)]
 #[derive(Derivative, Debug, Copy, Clone)]
@@ -373,7 +374,6 @@ pub struct UIWidget {
     pub allocated: u64,
 }
 
-
 #[repr(C)]
 #[derive(Derivative, Debug, Copy, Clone)]
 #[derivative(Default)]
@@ -396,8 +396,6 @@ pub struct UIPanelManager {
     pub allocated: u64,
 }
 
-
-
 #[repr(C)]
 #[derive(Derivative, Debug, Copy, Clone)]
 #[derivative(Default)]
@@ -407,7 +405,6 @@ pub struct SkillList {
     pub p_right_skill: u64,
     pub p_used_skill: u64,
 }
-
 
 #[repr(C)]
 #[derive(Derivative, Debug, Copy, Clone)]
