@@ -64,6 +64,14 @@ pub fn load_images(gfx: &mut Graphics) -> HashMap<String, Texture> {
     image_data_list.insert(String::from("FistsOfFire"), include_bytes!("./images/icons/FistsOfFire.png"));
     image_data_list.insert(String::from("Frenzy"), include_bytes!("./images/icons/Frenzy.png"));
     image_data_list.insert(String::from("FrozenArmor"), include_bytes!("./images/icons/FrozenArmor.png"));
+    
+    // 👇 === 新增三大邪术的图片加载 === 👇
+    image_data_list.insert(String::from("HexBane"), include_bytes!("./images/icons/HexBane.png"));
+    image_data_list.insert(String::from("HexPurge"), include_bytes!("./images/icons/HexPurge.png"));
+    image_data_list.insert(String::from("HexSiphon"), include_bytes!("./images/icons/HexSiphon.png"));
+	image_data_list.insert(String::from("Consume"), include_bytes!("./images/icons/Consume.png"));
+    // 👆 ============================ 👆
+
     image_data_list.insert(String::from("HolyFire"), include_bytes!("./images/icons/HolyFire.png"));
     image_data_list.insert(String::from("HolyShield"), include_bytes!("./images/icons/HolyShield.png"));
     image_data_list.insert(String::from("HolyShock"), include_bytes!("./images/icons/HolyShock.png"));
