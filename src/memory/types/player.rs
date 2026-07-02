@@ -18,8 +18,9 @@ pub struct PlayerUnit {
     pub player_name: String,
     pub pos_x: f32,
     pub pos_y: f32,
-    #[derivative(Default(value = "[State::None; 192]"))]
-    pub states: [State; 192],
+    // 👇 扩容：将 192 改为 256，支持 Mod 的超长状态数组
+    #[derivative(Default(value = "[State::None; 256]"))]
+    pub states: [State; 256],
     pub stats: Vec<Stat>,
     pub player_class: PlayerClass,
     pub skills: Vec<PlayerSkill>,
@@ -61,9 +62,10 @@ impl PlayerUnit {
         }
     }
 
-    pub fn get_states(d2rprocess: &D2RInstance, unit: Unit) -> [State; 192] {
+    // 👇 扩容：将返回值 192 改为 256
+    pub fn get_states(d2rprocess: &D2RInstance, unit: Unit) -> [State; 256] {
         if unit.p_stats_list_ex == 0 {
-            [State::None; 192]
+            [State::None; 256] // 👇 扩容：兜底值 192 改为 256
         } else {
             let stat_list: StatsList = d2rprocess.read_mem::<StatsList>(unit.p_stats_list_ex);
             let state_flags = stat_list.state_flags;
