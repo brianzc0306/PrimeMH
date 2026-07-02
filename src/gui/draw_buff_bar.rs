@@ -52,29 +52,25 @@ pub fn draw_buff_bar(draw: &mut Draw, game_data: &GameData, settings: &Settings,
                             draw.rect((x - 2.5, y - 2.5), (icon_size + 5.0, icon_size + 5.0)).color(Color::RED);
                         }
                         draw.image(image).position(x, y).size(icon_size, icon_size).alpha(0.8);
-                        // draw.text(&all_fonts.formal_font, &state_icon.animation_frame.to_string()).position(x + icon_size - 20.0, y + icon_size - 20.0).size(20.0).color(Color::WHITE);
-
                     } else if state_icon.removing == false {
                         
                         draw.rect((x - 1.0, y - 1.0), (icon_size + 2.0, icon_size + 2.0)).color(color);
                         draw.image(image).position(x, y).size(icon_size, icon_size);
-                        if state_icon.state == State::BattleOrders {
-                            draw_timer_text(draw, settings, x, y, icon_size, all_fonts, &mut buff_bar.buff_timers.battle_orders);
-                        }
-                        if state_icon.state == State::BattleCommand {
-                            draw_timer_text(draw, settings, x, y, icon_size, all_fonts, &mut buff_bar.buff_timers.battle_command);
-                        }
+                        
+                        if state_icon.state == State::BattleOrders { draw_timer_text(draw, settings, x, y, icon_size, all_fonts, &mut buff_bar.buff_timers.battle_orders); }
+                        if state_icon.state == State::BattleCommand { draw_timer_text(draw, settings, x, y, icon_size, all_fonts, &mut buff_bar.buff_timers.battle_command); }
+
                     }
                     x = x + icon_size + 3.0;
                 }
                 None => {
+                    // 如果看到了这一行报错，说明你的图片名字没改对或者没放对位置！
                     log::info!("Found unknown state icon {}", &state_icon.image_name);
                 },
             };
             
         }
     }
-    
 }
 
 pub fn draw_timer_text(draw: &mut Draw, settings: &Settings, x: f32, y: f32, icon_size: f32, all_fonts: &Fonts, buff_timer: &BuffTimer) {
@@ -86,7 +82,6 @@ pub fn draw_timer_text(draw: &mut Draw, settings: &Settings, x: f32, y: f32, ico
             draw.text(&all_fonts.formal_font, &seconds_remaining.to_string()).position(x + (icon_size / 2.0), y - font_size - 3.0).size(font_size).h_align_center().color(font_color);
         }
     }
-    
 }
 
 pub fn draw_charge_text(draw: &mut Draw, settings: &Settings, x: f32, y: f32, icon_size: f32, all_fonts: &Fonts, charges: &i16) {
@@ -95,7 +90,6 @@ pub fn draw_charge_text(draw: &mut Draw, settings: &Settings, x: f32, y: f32, ic
     draw.text(&all_fonts.formal_font, &charges.to_string()).position(x + (icon_size / 2.0) + 1.0, y - font_size - 3.0 + 1.0).size(font_size).h_align_center().color(Color::BLACK);
     draw.text(&all_fonts.formal_font, &charges.to_string()).position(x + (icon_size / 2.0), y - font_size - 3.0).size(font_size).h_align_center().color(font_color);
 }
-
 
 #[derive(Default, Debug, Clone)]
 pub struct BuffBarAnimationState {
@@ -109,7 +103,6 @@ impl BuffBarAnimationState {
                 match get_buff_bar_icon(state) {
                     Some(new_icon) => {
                         if self.buff_icons.iter_mut().find(|icon| icon.state == *state).is_none() {
-                            // add new one
                             self.buff_icons.push(new_icon);
                         }
                     },
@@ -121,8 +114,8 @@ impl BuffBarAnimationState {
             match get_buff_bar_icon_from_stat(&stat) {
                 Some((new_icon, state)) => {
                     match self.buff_icons.iter_mut().find(|icon| icon.state == state) {
-                        Some(icon) => icon.charges = stat.value, //update charges
-                        None => self.buff_icons.push(new_icon)  // add new one
+                        Some(icon) => icon.charges = stat.value, 
+                        None => self.buff_icons.push(new_icon)  
                     }
                 },
                 None => ()
@@ -131,31 +124,24 @@ impl BuffBarAnimationState {
         self.buff_icons.sort_unstable_by(|a, b| (a.buff_group, &a.image_name).cmp(&(b.buff_group, &b.image_name)));
         self.buff_icons.dedup();
         for buff_icon in &mut self.buff_icons {
-            if buff_icon.removing {
-                buff_icon.animation_frame += 1;
-            }
+            if buff_icon.removing { buff_icon.animation_frame += 1; }
         }
         self.buff_icons.retain(|buff_icon| buff_icon.animation_frame <= 100);
         
         for buff_icon in self.buff_icons.iter_mut() {
             if player.states.iter().find(|state| *state == &buff_icon.state).is_none() {
                 if buff_icon.removing == false {
-                    // state disappeared so set removing state to true and begin animation
-                    // log::info!("Removing state icon {}", &buff_icon.image_name);
                     buff_icon.removing = true;
                     buff_icon.started = SystemTime::now();
                 }
             } else {
-                // state has come back during animation so reset animation
                 if buff_icon.removing == true {
-                    // log::info!("Aborting removal of state icon {}", &buff_icon.image_name);
                     buff_icon.removing = false;
                     buff_icon.animation_frame = 0;
                     buff_icon.started = SystemTime::now();
                 }
             }
         }
-        // non buff icons are removed immediately
         self.buff_icons.retain(|buff_icon| (buff_icon.buff_group != BuffGroup::Buff && buff_icon.removing == false) || buff_icon.buff_group == BuffGroup::Buff);
     }
 }
@@ -198,99 +184,41 @@ pub fn get_buff_bar_icon_from_stat(stat: &Stat) -> Option<(BuffIcon, State)> {
     }
 }
 
-
 pub fn get_buff_bar_icon(state: &State) -> Option<BuffIcon> {
     match state {
-        State::ResistFire |
-        State::ResistCold |
-        State::ResistLight |
-        State::ResistAll |
-        State::Conviction |  // this is a buff and debuff
-        State::Might |
-        State::Prayer |
-        State::HolyFire |
-        State::Thorns |
-        State::Defiance |
-        State::BlessedAim |
-        State::Stamina |
-        State::Concentration |
-        State::HolyWind |
-        State::Cleansing |
-        State::HolyShock |
-        State::Sanctuary |
-        State::Meditation |
-        State::Fanaticism |
-        State::Redemption |
-        State::Barbs |
-        State::Wolverine |
-        State::OakSage => {
+        State::ResistFire | State::ResistCold | State::ResistLight | State::ResistAll |
+        State::Conviction | State::Might | State::Prayer | State::HolyFire |
+        State::Thorns | State::Defiance | State::BlessedAim | State::Stamina |
+        State::Concentration | State::HolyWind | State::HolyWindCold | State::Cleansing |
+        State::HolyShock | State::Sanctuary | State::Meditation | State::Fanaticism |
+        State::Redemption | State::Barbs | State::Wolverine | State::OakSage => {
             Some(BuffIcon::new(state.clone(), BuffGroup::Aura, false, 0))
         },
-        State::FrozenArmor |
-        State::Inferno |
-        State::Blaze |
-        State::BoneArmor |
-        State::Enchant |
-        State::InnerSight |
-        State::ChillingArmor |
-        State::Shout |
-        State::EnergyShield |
-        State::VenomClaws |
-        State::BattleOrders |
-        State::Thunderstorm |
-        State::BattleCommand |
-        State::SlowMissiles |
-        State::ShiverArmor |
-        State::Valkyrie |
-        State::Frenzy |
-        State::Berserk |
-        State::HolyShield |
-        State::ShadowWarrior |
-        State::FeralRage |
-        State::Wolf |
-        State::Bear |
-        State::Hurricane |
-        State::Armageddon |
-        State::CycloneArmor |
-        State::CloakOfShadows |
-        State::Cloaked |
-        State::Quickness |
-        State::Bladeshield |
-        State::Fade => {
-            Some(BuffIcon::new(state.clone(), BuffGroup::Buff, false, 0))
-        },
-        State::Poison |
-        State::AmplifyDamage |
-        State::Cold |
-        State::Weaken |
-        State::DimVision |
-        State::Slowed |
-        // State::Conviction |
-        State::Convicted |
-        State::Conversion |
-        State::IronMaiden |
-        State::Terror |
-        State::Attract |
-        State::LifeTap |
-        State::Confuse |
-        State::Decrepify |
-        State::LowerResist |
-        State::DefenseCurse |
+        State::FrozenArmor | State::Inferno | State::Blaze | State::BoneArmor |
+        State::Enchant | State::InnerSight | State::ChillingArmor | State::Shout |
+        State::EnergyShield | State::VenomClaws | State::BattleOrders | State::Thunderstorm |
+        State::BattleCommand | State::SlowMissiles | State::ShiverArmor | State::Valkyrie |
+        State::Frenzy | State::Berserk | State::HolyShield | State::ShadowWarrior |
+        State::FeralRage | State::Wolf | State::Bear | State::Hurricane |
+        State::Armageddon | State::CycloneArmor | State::CloakOfShadows | State::Cloaked |
+        State::Quickness | State::Bladeshield | State::Fade |
+        // 👇 注册增益图标 👇
+        State::HexBane | State::HexPurge | State::HexSiphon | State::Consume => { 
+        Some(BuffIcon::new(state.clone(), BuffGroup::Buff, false, 0))
+    },
+        State::Poison | State::AmplifyDamage | State::Cold | State::Weaken |
+        State::DimVision | State::Slowed | State::Convicted | State::Conversion |
+        State::IronMaiden | State::Terror | State::Attract | State::LifeTap |
+        State::Confuse | State::Decrepify | State::LowerResist | State::DefenseCurse |
         State::BloodMana => {
             Some(BuffIcon::new(state.clone(), BuffGroup::Debuff, false, 0))
         },
         _ => None
     }
-
 }
-
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Debug, Clone, Copy)]
 #[allow(dead_code)]
 pub enum BuffGroup {
-    Debuff,
-    Buff,
-    Aura,
-    Passive,
-    Charge
+    Debuff, Buff, Aura, Passive, Charge
 }
