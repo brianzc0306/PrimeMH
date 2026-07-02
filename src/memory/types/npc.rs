@@ -25,8 +25,9 @@ pub struct NPCUnit {
     pub mode: NPCMode,
     pub pos_x: f32,
     pub pos_y: f32,
-    #[derivative(Default(value = "[State::None; 192]"))]
-    pub states: [State; 192],
+    // 👇 扩容：将 192 改为 256
+    #[derivative(Default(value = "[State::None; 256]"))]
+    pub states: [State; 256],
     pub p_path: u64,
     pub npc_type: NPCType,
     pub monster_flag: MonsterFlag,
@@ -98,9 +99,10 @@ impl NPCUnit {
         }
     }
 
-    pub fn get_states(d2rprocess: &D2RInstance, unit: Unit) -> [State; 192] {
+    // 👇 扩容：将 192 改为 256
+    pub fn get_states(d2rprocess: &D2RInstance, unit: Unit) -> [State; 256] {
         if unit.p_stats_list_ex == 0 {
-            [State::None; 192]
+            [State::None; 256]
         } else {
             let stat_list: StatsList = d2rprocess.read_mem::<StatsList>(unit.p_stats_list_ex);
             let state_flags = stat_list.state_flags;
