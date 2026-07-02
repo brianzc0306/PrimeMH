@@ -1,8 +1,8 @@
 use core::fmt;
 use std::mem::transmute;
 
-pub fn parse_state_flags(state_flags: [u32; 6]) -> [State; 192] {
-    let mut states = [State::None; 192];
+pub fn parse_state_flags(state_flags: [u32; 8]) -> [State; 256] {
+    let mut states = [State::None; 256];
     for (n, byte) in state_flags.iter().enumerate() {
         if byte > &0 {
             for i in 0..32 {
@@ -212,11 +212,75 @@ pub enum State {
     SharedStash,
     HideDead,
 
-    // --- 以下为 3.x 版本新增或填充的状态 ---
+    // ... 前面保持不变 ...
     BindDemon,    // 188: 术士王朝 Mod 的恶魔奴役状态
-    State189,     // 189: 填充占位符
-    State190,     // 190: 填充占位符
-    State191,     // 191: 填充占位符，至此刚好填满 [u32; 6] 的 192 个 bit
+    State189, 
+	State190, 
+	State191, 
+	State192, 
+	State193, 
+	State194, 
+	State195, 
+	State196, 
+	State197,
+    HexBane,      // 198: 邪术：灾祸（雷达确定的位置！）
+    State199,     // 199: 填充
+    HexSiphon,     // 200: 邪术：虹吸
+    State201,     // 201: 填充
+	HexPurge,     // 202: 邪术：净化（精准命中！）
+    State203,    // 203: 填充
+    State204, 
+	State205, 
+	State206, 
+	State207, 
+	Consume,     // 208: 👉 术士技能：吞噬
+	State209, 
+	State210, 
+	State211, 
+	State212, 
+	State213,
+    State214, 
+	State215, 
+	State216, 
+	State217, 
+	State218, 
+	State219, 
+	State220, 
+	State221, 
+	State222, 
+	State223,
+    State224, 
+	State225, 
+	State226, 
+	State227, 
+	State228, 
+	State229, 
+	State230, 
+	State231, 
+	State232, 
+	State233,
+    State234, 
+	State235, 
+	State236, 
+	State237, 
+	State238, 
+	State239, 
+	State240, 
+	State241, 
+	State242, 
+	State243,
+    State244, 
+	State245, 
+	State246, 
+	State247, 
+	State248, 
+	State249, 
+	State250, 
+	State251, 
+	State252, 
+	State253,
+    State254, 
+	State255,
 }
 
 impl fmt::Display for State {
